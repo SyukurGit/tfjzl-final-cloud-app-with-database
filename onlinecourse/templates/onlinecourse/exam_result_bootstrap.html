@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Results | {{ course.name }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body class="bg-light">
+
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-light bg-white border-bottom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand font-weight-bold text-primary" href="{% url 'onlinecourse:index' %}">OnlineCourse</a>
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <span class="mr-3 font-weight-bold">{{ user.first_name }} ({{ user.username }})</span>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'onlinecourse:logout' %}">Logout</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5" style="max-width: 860px;">
+        <!-- Congratulations Banner -->
+        {% if passed %}
+            <div class="alert alert-success border-success text-center py-4 shadow-sm rounded">
+                <h2 class="alert-heading font-weight-bold text-success mb-2">🎉 Congratulations! You passed the exam!</h2>
+                <p class="lead mb-0">Well done! You have demonstrated comprehensive understanding of <strong>{{ course.name }}</strong>.</p>
+            </div>
+        {% else %}
+            <div class="alert alert-danger text-center py-4 shadow-sm rounded">
+                <h2 class="alert-heading font-weight-bold text-danger mb-2">You did not pass the exam.</h2>
+                <p class="lead mb-0">Review the lessons and try taking the exam again.</p>
+                <a class="btn btn-danger mt-3" href="{% url 'onlinecourse:course_details' course.id %}">Re-test</a>
+            </div>
+        {% endif %}
+
+        <!-- Score Summary Card -->
+        <div class="card my-4 shadow-sm border-0">
+            <div class="card-header bg-primary text-white font-weight-bold py-3">
+                <h5 class="mb-0">Your Exam Score Summary</h5>
+            </div>
+            <div class="card-body text-center py-4">
+                <div class="row">
+                    <div class="col-md-4 border-right">
+                        <small class="text-muted text-uppercase font-weight-bold">Total Marks</small>
+                        <h2 class="font-weight-bold mt-2 text-dark">{{ grade }} / {{ total_marks }}</h2>
+                    </div>
+                    <div class="col-md-4 border-right">
+                        <small class="text-muted text-uppercase font-weight-bold">Percentage</small>
+                        <h2 class="font-weight-bold mt-2 text-success">{{ percentage }}%</h2>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted text-uppercase font-weight-bold">Passing Requirement</small>
+                        <h2 class="font-weight-bold mt-2 text-info">70%</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Details / Questions Results -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white font-weight-bold py-3">
+                <h5 class="mb-0">Detailed Exam Results</h5>
+            </div>
+            <div class="card-body p-4">
+                {% for result in exam_results %}
+                    <div class="mb-4 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="font-weight-bold text-dark mb-0">Question {{ forloop.counter }}: {{ result.question.question_text }}</h5>
+                            {% if result.is_correct %}
+                                <span class="badge badge-success px-3 py-2 font-weight-bold">✓ Correct (+{{ result.question.grade }} pts)</span>
+                            {% else %}
+                                <span class="badge badge-danger px-3 py-2 font-weight-bold">✗ Incorrect (0 pts)</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-2">
+                            <p class="mb-1 text-success font-weight-bold">Correct Answers:</p>
+                            <ul class="mb-0 text-success pl-4">
+                                {% for ans in result.correct_answers %}
+                                    <li>{{ ans.choice_text }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No question results to display.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a class="btn btn-outline-primary btn-lg px-5 font-weight-bold" href="{% url 'onlinecourse:course_details' course.id %}">
+                Back to Course Details
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.name }} | Course Details</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand font-weight-bold" href="{% url 'onlinecourse:index' %}">OnlineCourse</a>
+            </div>
+            <ul class="nav navbar-nav navbar-right flex-row">
+                {% if user.is_authenticated %}
+                <li class="nav-item mr-3">
+                    <span class="navbar-text text-dark font-weight-bold">{{ user.first_name }} ({{ user.username }})</span>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'onlinecourse:logout' %}">Logout</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <form class="form-inline" action="{% url 'onlinecourse:login' %}" method="post">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm mr-2" placeholder="Username" name="username" required>
+                            <input type="password" class="form-control form-control-sm mr-2" placeholder="Password" name="psw" required>
+                            <button class="btn btn-primary btn-sm" type="submit">Login</button>
+                            <a class="btn btn-link btn-sm ml-2" href="{% url 'onlinecourse:registration' %}">Sign Up</a>
+                        </div>
+                    </form>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page content -->
+    <div class="container mt-4 mb-5">
+        <div class="jumbotron p-4 text-white rounded bg-dark">
+            <h1 class="display-4">{{ course.name }}</h1>
+            <p class="lead">{{ course.description }}</p>
+        </div>
+
+        <h3 class="mb-3">Course Lessons</h3>
+        <div class="accordion" id="lessonsAccordion">
+            {% for lesson in course.lesson_set.all %}
+                <div class="card mb-2 shadow-sm">
+                    <div class="card-header bg-light" id="heading{{ forloop.counter }}">
+                        <h5 class="mb-0">
+                            <button class="btn btn-link text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}">
+                                Lesson {{ lesson.order|add:1 }}: {{ lesson.title }}
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="collapse{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}" data-parent="#lessonsAccordion">
+                        <div class="card-body">
+                            {{ lesson.content }}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No lessons available for this course yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Task: Show exam questions and choices -->
+        {% if user.is_authenticated %}
+            <div class="mt-5">
+                <button class="btn btn-info btn-block btn-lg font-weight-bold" type="button" data-toggle="collapse" data-target="#examCollapse" aria-expanded="false" aria-controls="examCollapse">
+                    📝 Start Course Exam
+                </button>
+
+                <div class="collapse mt-3" id="examCollapse">
+                    <div class="card card-body border-info shadow">
+                        <h4 class="text-info font-weight-bold mb-3">Course Final Exam</h4>
+                        <p class="text-muted">Select all correct options for each question below and click Submit to view your evaluation results.</p>
+
+                        <form id="questionform" action="{% url 'onlinecourse:submit' course.id %}" method="post">
+                            {% csrf_token %}
+                            {% for question in course.question_set.all %}
+                                <div class="card mt-3">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0 font-weight-bold">Question {{ forloop.counter }}: {{ question.question_text }}</h5>
+                                        <small class="text-muted">Points: {{ question.grade }}</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-0">
+                                            {% for choice in question.choice_set.all %}
+                                                <div class="form-check my-2">
+                                                    <input class="form-check-input" type="checkbox" name="choice_{{ choice.id }}" id="choice_{{ choice.id }}" value="{{ choice.id }}">
+                                                    <label class="form-check-label" for="choice_{{ choice.id }}">
+                                                        {{ choice.choice_text }}
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">No exam questions configured for this course.</p>
+                            {% endfor %}
+
+                            <input class="btn btn-success btn-block btn-lg mt-4 font-weight-bold" type="submit" value="Submit Exam">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-warning mt-4 text-center">
+                <strong>Notice:</strong> Please log in to take the course exam.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
